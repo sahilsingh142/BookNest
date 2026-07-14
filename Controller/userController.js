@@ -1,11 +1,21 @@
+import { genrateToken } from "../Jwt/token.js";
 import userSchema from "../Schema/userSchema.js"
 import bcrypt from "bcrypt";
+import { signupSchema } from "../Validation/validation.js";
 
 export const signup = async (req, res) => {
     try {
 
+        const result = signupSchema.safeParse(req.body);
+
+        if (!result.success) {
+            return res.status(400).json({
+                errors: result.error.issues,
+            });
+        }
+
         const { name, email, password, role } = req.body;
-        const existingUser = await userModel.findOne({ email });
+        const existingUser = await userSchema.findOne({ email });
         const hashedPassword = await bcrypt.hash(password, 10);
 
         if (existingUser) {
@@ -20,12 +30,19 @@ export const signup = async (req, res) => {
             password: hashedPassword,
             role
         });
-
         const userData = await newUser.save();
+
+        const payload = {
+            name: name,
+            id: userData.id,
+            role: userData.role
+        }
+        const token = genrateToken(payload);
 
         res.status(201).json({
             message: "Signup Successful",
-            data: "userData"
+            data: userData,
+            token: token
         });
     }
     catch (err) {
@@ -36,10 +53,8 @@ export const signup = async (req, res) => {
 
 export const login = async (req, res) => {
     try {
-
         const { email, password, role } = req.body;
-        const user = await userModel.findOne({ email });
-        const isMatch = await bcrypt.compare(password, user.password);
+        const user = await userSchema.findOne({ email });
 
         if (!user) {
             return res.status(404).json({ message: "User not found" });
@@ -49,11 +64,26 @@ export const login = async (req, res) => {
             return res.status(400).json({ message: "Invalid Role" });
         }
 
+        const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
             return res.status(400).json({ message: "Invalid Password" });
         }
 
-        res.status(200).json({ message: "Login Successful", data: user });
+        const payload = {
+            name: user.name,
+            id: user.id,
+            role: user.role
+        }
+        const token = genrateToken(payload);
+
+        res.cookie("token", token, {
+            httpOnly: true,
+            secure: false,
+            sameSite: "lax",
+            maxAge: 7 * 24 * 60 * 60 * 1000
+        });
+
+        res.status(200).json({ message: "Login Successful", data: user, token: token });
     } catch (err) {
         console.log(err);
         res.status(500).json({
@@ -61,4 +91,37 @@ export const login = async (req, res) => {
         });
     }
 
+};
+
+export const logout = (req, res) => {
+
+    res.clearCookie("token", {
+        httpOnly: true,
+        secure: false,
+        sameSite: "lax",
+    });
+
+    res.status(200).json({
+        message: "Logout Successful"
+    });
+};
+
+export const businessPage = (req, res) => {
+    res.json({
+        message: "Protected Route",
+        user: req.user
+    });
+}
+
+export const customerPage = (req, res) => {
+    res.json({
+        message: "Protected Route",
+        user: req.user
+    });
+}
+
+export const currentUser = (req, res) => {
+    res.status(200).json({
+        user: req.user,
+    });
 };
