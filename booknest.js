@@ -1,10 +1,12 @@
 import express from "express";
 import auth from './Routes/userRoute.js'
+import protect from './Routes/protectRoute.js'
 import mongoose from "mongoose";
 import dotenv from 'dotenv';
 import cookieParser from "cookie-parser";
 import cors from 'cors';
 import rateLimit from "express-rate-limit";
+import business from './Routes/businesRoute.js'
 
 const app = express();
 const url = 'mongodb+srv://Sahil:Sahil0998@booknest.qstoppn.mongodb.net/booknest?retryWrites=true&w=majority';
@@ -16,8 +18,10 @@ app.use(cors({
   }));
 app.use(express.json());
 app.use(cookieParser());
-app.use('/auth', auth);
 
+app.use('/auth', auth);
+app.use('/protected',protect);
+app.use('/fromData',business);
 
 const limiter = rateLimit({
   windowMs: 30 * 60 * 1000, 
@@ -34,7 +38,7 @@ mongoose.connect(url)
     console.log("Database Connected")
 })
 .catch((err) => {
-    console.log(err);
+    console.log("Backend Problem",err);
 })
 
 app.listen(5600, () => {
