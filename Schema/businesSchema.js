@@ -1,6 +1,13 @@
 import mongoose from "mongoose";
 
 const businessSchema = new mongoose.Schema({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
+    unique: true
+  },
+  
   category: {
     type: String,
     required: true,
@@ -8,6 +15,7 @@ const businessSchema = new mongoose.Schema({
 
   businessName: {
     type: String,
+    unique: true,
     required: true,
   },
 
@@ -28,6 +36,7 @@ const businessSchema = new mongoose.Schema({
 
   number: {
     type: String,
+    unique: true,
     required: true,
   },
 
