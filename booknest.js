@@ -6,25 +6,29 @@ import dotenv from 'dotenv';
 import cookieParser from "cookie-parser";
 import cors from 'cors';
 import rateLimit from "express-rate-limit";
-import business from './Routes/businesRoute.js'
-
-const app = express();
-const url = 'mongodb+srv://Sahil:Sahil0998@booknest.qstoppn.mongodb.net/booknest?retryWrites=true&w=majority';
+import business from './Routes/businesRoute.js';
+import http from "http";
+import { initSocket } from "./Socket/socket.js";
 
 dotenv.config();
 
+const app = express();
+const url = 'mongodb+srv://Sahil:Sahil0998@booknest.qstoppn.mongodb.net/booknest?retryWrites=true&w=majority';
+const server = http.createServer(app);
+
 app.use(cors({
-    origin: "http://localhost:5173",credentials: true
-  }));
+  origin: "http://localhost:5173", credentials: true
+}));
+
 app.use(express.json());
 app.use(cookieParser());
 
 app.use('/auth', auth);
-app.use('/protected',protect);
-app.use('/fromData',business);
+app.use('/protected', protect);
+app.use('/fromData', business);
 
 const limiter = rateLimit({
-  windowMs: 30 * 60 * 1000, 
+  windowMs: 30 * 60 * 1000,
   max: 100,
   message: {
     success: false,
@@ -33,14 +37,17 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-mongoose.connect(url)
-.then(()=>{
-    console.log("Database Connected")
-})
-.catch((err) => {
-    console.log("Backend Problem",err);
-})
+initSocket(server);
 
-app.listen(5600, () => {
-    console.log("Server Connected")
+mongoose.connect(url)
+  .then(() => {
+    console.log("Database Connected")
+  })
+  .catch((err) => {
+    console.log("Backend Problem", err);
+  })
+
+
+server.listen(5600, () => {
+  console.log("Server running on port 5600");
 });

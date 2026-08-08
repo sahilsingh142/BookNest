@@ -24,6 +24,17 @@ const businessSchema = new mongoose.Schema({
     required: true,
   },
 
+   status: {
+        type: String,
+        enum: ["available", "busy"],
+        default: "available"
+    },
+
+    waitTime: {
+        type: Number,
+        default: 0
+    },
+
   village: {
     type: String,
     required: true,
@@ -53,6 +64,6 @@ const businessSchema = new mongoose.Schema({
     }
   ]
 
-});
+}, { timestamps: true });
 
 export default mongoose.model("Business", businessSchema);
