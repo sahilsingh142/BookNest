@@ -1,5 +1,6 @@
 import busniess from '../Schema/businesSchema.js';
 import { getIO } from "../Socket/socket.js";
+import webpush from "../config/webPush.js";
 
 export const businessData = async (req, res) => {
     try {
@@ -136,14 +137,6 @@ export const updateBusiness = async (req, res) => {
 
         await business.save();
 
-        const io = getIO();
-
-        io.emit("businessStatusUpdated", {
-            businessId: business._id,
-            status: business.status,
-            waitTime: business.waitTime
-        });
-
         res.status(200).json({
             message: "Business profile updated successfully",
             data: business,
@@ -171,6 +164,14 @@ export const updateStatus = async (req, res) => {
 
         await business.save();
 
+         const io = getIO();
+
+        io.emit("businessStatusUpdated", {
+            businessId: business._id,
+            status: business.status,
+            waitTime: business.waitTime
+        });
+
         res.status(200).json({
             data: business
         })
@@ -189,7 +190,6 @@ export const getStatusData = async (req, res) => {
             userId: req.user._id,
         });
 
-        console.log(business)
         if (!business) {
             return res.status(404).json({
                 message: "Business not found"
@@ -208,3 +208,91 @@ export const getStatusData = async (req, res) => {
         });
     }
 }
+
+export const savePushSubscription = async (req, res) => {
+    try {
+
+        const { subscription } = req.body;
+
+        if (!subscription) {
+            return res.status(400).json({
+                message: "Push subscription is required"
+            });
+        }
+
+        const business = await busniess.findOne({
+            userId: req.user._id
+        });
+
+        if (!business) {
+            return res.status(404).json({
+                message: "Business profile not found"
+            });
+        }
+
+        business.pushSubscription = subscription;
+
+        await business.save();
+
+        res.status(200).json({
+            message: "Push subscription saved successfully"
+        });
+
+    } catch (err) {
+
+        console.log(err);
+
+        res.status(500).json({
+            message: "Failed to save push subscription"
+        });
+    }
+};
+
+export const notifyOwner = async (req, res) => {
+    try {
+
+        const { businessId } = req.body;
+
+        if (!businessId) {
+            return res.status(400).json({
+                message: "Business ID is required"
+            });
+        }
+
+        const business = await busniess.findById(businessId);
+
+        if (!business) {
+            return res.status(404).json({
+                message: "Business not found"
+            });
+        }
+
+        if (!business.pushSubscription) {
+            return res.status(404).json({
+                message: "Owner has notifications disabled"
+            });
+        }
+
+        const payload = JSON.stringify({
+            title: "BookNest 🔔",
+            body: "A customer wants to be notified about your business."
+        });
+
+        await webpush.sendNotification(
+            business.pushSubscription,
+            payload
+        );
+
+        return res.status(200).json({
+            message: "Owner notified successfully"
+        });
+
+    } catch (error) {
+
+        console.log("Push Error:", error);
+
+        return res.status(500).json({
+            message: "Failed to notify owner"
+        });
+    }
+};

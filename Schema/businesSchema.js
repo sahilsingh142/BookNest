@@ -62,7 +62,21 @@ const businessSchema = new mongoose.Schema({
         required: true,
       }
     }
-  ]
+  ],
+
+  pushSubscription: {
+    endpoint: {
+        type: String
+    },
+    keys: {
+        p256dh: {
+            type: String
+        },
+        auth: {
+            type: String
+        }
+    }
+}
 
 }, { timestamps: true });
 

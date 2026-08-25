@@ -2,7 +2,13 @@ import jwt from 'jsonwebtoken';
 import User from '../Schema/userSchema.js';
 
 export const genrateToken = (handleToken) => {
-    return jwt.sign(handleToken, process.env.JWT_SECRETKEY);
+     return jwt.sign(
+        handleToken,
+        process.env.JWT_SECRETKEY,
+        {
+            expiresIn: "7d"
+        }
+    );
 }
 
 export const jwtAuthMiddle = async (req, res, next) => {
