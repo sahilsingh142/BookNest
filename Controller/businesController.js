@@ -1,6 +1,6 @@
 import busniess from '../Schema/businesSchema.js';
 import { getIO } from "../Socket/socket.js";
-import webpush from "../config/webPush.js";
+import webpush from "../Config/webPush.js";
 
 export const businessData = async (req, res) => {
     try {
