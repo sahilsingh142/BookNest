@@ -2,11 +2,16 @@ import { Server } from "socket.io";
 
 let io;
 
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  "http://localhost:5173"
+];
+
 export const initSocket = (server) => {
 
     io = new Server(server, {
         cors: {
-            origin: process.env.FRONTEND_URL,
+            origin: allowedOrigins,
             credentials: true
         }
     });
